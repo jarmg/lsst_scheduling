@@ -10,7 +10,7 @@ from poliastro.plotting import OrbitPlotter3D
 
 
 class SatelliteConstellation():
-    
+
     def __init__(self, planes, sats_per_plane, altitude, inclination):
         self.planes = planes
         self.sats_per_plane = sats_per_plane
@@ -46,13 +46,13 @@ class SatelliteConstellation():
         if not sats_to_plot:
             sats_to_plot = self.planes
         s = np.arange(0, len(self), len(self)//sats_to_plot)
-        
+
         op = OrbitPlotter3D()
         for sat in self.satellites[s]: f = op.plot(sat)
         return f
 
     def _is_satellite_in_frame(self, ra, dec, loc, fov, sat_pass, ts):
-        ra_rng = (ra - fov, ra + fov)     
+        ra_rng = (ra - fov, ra + fov)
         dec_rng = (dec - fov, dec + fov)
 
         lat, lon, alt = loc
@@ -69,24 +69,24 @@ class SatelliteConstellation():
 
     def check_observation(self, ra, dec, loc, fov, obs_time, obs_len):
         '''
-        params: 
+        params:
             az: center azimuth of observation
             el: center elevation of observation
             loc: ecef telescope location (x, y, z)
             obs_time: GPS(?) #FIXME: figure this out
             fov: radius of the field of view in degrees
             obs_len: length of exposure (seconds)
-        
+
         returns:
             bool: whether a satellite will be in the view
             TODO: Other info?
-        ''' 
+        '''
 
         resolution = 5 #check every 5 seconds - this is a linear optimization
 
         # ts = np.array([time.Time(t, format='unix') for t in range(int(obs_time), int(obs_time + obs_len))])
         ts = units.Quantity(range(int(obs_time), int(obs_time + obs_len), resolution), units.s)
-        
+
         # Propogate satellites to the time of observation
         self.satellites = np.array([s.propagate(ts[0]) for s in self.satellites])
 
@@ -98,8 +98,10 @@ class SatelliteConstellation():
                 v=s.v,
                 tofs=ts
             )
-            for s in self.satellites 
+            for s in self.satellites
         ])
 
         # Check if any satellites cross the observation
-        return np.any([self._is_satellite_in_frame(ra, dec,  loc, fov, sat_pass, ts) for sat_pass in ss[:, 1, :]])
+        return np.any([
+            self._is_satellite_in_frame(ra, dec,  loc, fov, sat_pass, ts)
+            for sat_pass in ss[:, 1, :]])
